@@ -81,7 +81,8 @@ def penaltyFunction(rate, capacity):
 def CalcPrimalRate(user, users, alpha, x_r, stepSize=0.0001):
     if alpha == float("inf"):
         avg_rate = sum(u.rate for u in users) / len(users)
-        return max(0, min(1, avg_rate + stepSize)) if user.rate < avg_rate else max(0, user.rate - stepSize)
+        new_rate = max(0, min(1, avg_rate + stepSize)) if user.rate < avg_rate else max(0, user.rate - stepSize)
+        return min(new_rate, 1)  # Ensure the rate does not exceed 1
 
     payment = 0
     for link in user.links:  # calculate the payment of the user
@@ -90,7 +91,9 @@ def CalcPrimalRate(user, users, alpha, x_r, stepSize=0.0001):
             if link in u.links:
                 rateSum += u.rate
         payment += penaltyFunction(rateSum, link.total_capacity)
-    return stepSize * (pow(user.rate, -1 * alpha) - payment) + x_r  # calculate the next rate of the user
+
+    new_rate = stepSize * (pow(user.rate, -1 * alpha) - payment) + x_r  # calculate the next rate of the user
+    return min(max(new_rate, 0), 1)  # Ensure the rate is within [0, 1]
 
 
 def CalcNetworkRate(network, alpha, Algorithm, N=1e5):
